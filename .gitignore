@@ -1,0 +1,22 @@
+# Ignore test outputs, screenshots, and logs
+*.log
+*.png
+*.jpg
+*.jpeg
+*.tmp
+*~
+.DS_Store
+
+# Ignore test workspace content (keep folder structure)
+test-workspace/*
+!test-workspace/.gitkeep
+!test-workspace/test_camoufox.py
+
+# Ignore local auth or session tokens if accidentally placed here
+*.key
+*.pem
+*.token
+.gemini/
+.claude/
+.codex/
+.hermes/

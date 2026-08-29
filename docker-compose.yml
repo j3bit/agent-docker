@@ -1,0 +1,32 @@
+services:
+  agy:
+    build:
+      context: .
+      args:
+        USER_UID: ${UID:-1000}
+        USER_GID: ${GID:-1000}
+    image: agy-docker-sandbox:latest
+    container_name: agy-sandbox
+    restart: "no"
+    stdin_open: true
+    tty: true
+    working_dir: /workspace
+    command: ["agy", "--dangerously-skip-permissions"]
+    volumes:
+      # Mount target workspace directory (Restricted filesystem scope)
+      - ${WORKSPACE_DIR:-./test-workspace}:/workspace
+      # Mount host Gemini / Antigravity authentication & configuration
+      - ${HOME}/.gemini:/home/developer/.gemini
+      # Persistent tool caches across workspaces
+      - agy-uv-cache:/home/developer/.cache/uv
+      - agy-npm-cache:/home/developer/.npm
+      - agy-pip-cache:/home/developer/.cache/pip
+    environment:
+      - TERM=xterm-256color
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+volumes:
+  agy-uv-cache:
+  agy-npm-cache:
+  agy-pip-cache:
+
