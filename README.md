@@ -70,8 +70,11 @@ agent-docker codex
 # Open an interactive Bash debugging shell in the container
 agent-docker --shell
 
-# Rebuild the Docker sandbox image
+# Rebuild the Docker sandbox image (using cache)
 agent-docker --build
+
+# Force re-download and update all agents & tools to latest versions
+agent-docker --update
 ```
 
 ---

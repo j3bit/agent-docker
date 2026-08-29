@@ -70,8 +70,11 @@ agent-docker codex
 # 샌드박스 내부 디버깅용 Bash 터미널 열기
 agent-docker --shell
 
-# 이미지 다시 빌드
+# 이미지 다시 빌드 (캐시 사용)
 agent-docker --build
+
+# 모든 에이전트 및 도구를 최신 버전으로 강제 업데이트 (--no-cache)
+agent-docker --update
 ```
 
 ---
