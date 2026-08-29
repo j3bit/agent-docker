@@ -9,7 +9,7 @@ while [ -h "$SOURCE" ]; do
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
-IMAGE_NAME="agy-docker-sandbox:latest"
+IMAGE_NAME="agent-docker-sandbox:latest"
 
 # Detect agent type from script name ($0)
 CALLER_NAME="$(basename "$0")"
@@ -117,6 +117,7 @@ NO_CACHE=0
 OPEN_SHELL=0
 TARGET_DIR=""
 EXTRA_ARGS=()
+BUILD_ARGS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -131,6 +132,14 @@ while [[ $# -gt 0 ]]; do
     -u|--update|--rebuild)
       BUILD_ONLY=1
       NO_CACHE=1
+      shift
+      ;;
+    --build-arg)
+      BUILD_ARGS+=("--build-arg" "$2")
+      shift 2
+      ;;
+    --build-arg=*)
+      BUILD_ARGS+=("$1")
       shift
       ;;
     -s|--shell)
@@ -177,6 +186,7 @@ if [ "$BUILD_ONLY" -eq 1 ] || ! docker image inspect "$IMAGE_NAME" > /dev/null 2
   USER_GID=$(id -g)
   docker build \
     "${BUILD_EXTRA_FLAGS[@]}" \
+    "${BUILD_ARGS[@]}" \
     --build-arg USER_UID="$USER_UID" \
     --build-arg USER_GID="$USER_GID" \
     -t "$IMAGE_NAME" \

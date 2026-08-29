@@ -40,11 +40,19 @@
 
 ## 🚀 빠른 시작 (Quick Start)
 
-### 1. 설치 (One-Liner Install)
+### 1. 설치 (Installation)
 
 ```bash
 git clone https://github.com/j3bit/agent-docker.git ~/.config/agent-docker
-~/.config/agent-docker/install.sh
+cd ~/.config/agent-docker
+
+# 모든 에이전트 설치 (기본)
+./install.sh
+
+# 원하는 에이전트만 선택 설치 (빌드 속도 및 용량 최적화)
+./install.sh --claude --codex
+# 또는
+./install.sh --agy
 ```
 
 ### 2. 사용법 (Usage)

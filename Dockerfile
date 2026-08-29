@@ -70,23 +70,45 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 RUN pip install --no-cache-dir --break-system-packages "camoufox[geoip]" "camoufox-mcp" playwright \
     && (npm install -g --force @andrew-chen-wang/camoufox-mcp 2>/dev/null || true)
 
-# 2. AI Coding Agents Installation
+# Build Arguments for Conditional Agent Installation (default: true)
+ARG INSTALL_AGY=true
+ARG INSTALL_CLAUDE=true
+ARG INSTALL_CODEX=true
+ARG INSTALL_OPENCODE=true
+ARG INSTALL_HERMES=true
+
+# 2. AI Coding Agents Installation (Conditionally installed based on build args)
 # Antigravity CLI (agy)
-RUN curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- -d /usr/local/bin
+RUN if [ "$INSTALL_AGY" = "true" ]; then \
+      echo "📦 Installing Antigravity CLI (agy)..." \
+      && curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- -d /usr/local/bin; \
+    fi
 
 # Claude Code CLI (claude)
-RUN npm install -g @anthropic-ai/claude-code 2>/dev/null || true
+RUN if [ "$INSTALL_CLAUDE" = "true" ]; then \
+      echo "📦 Installing Claude Code CLI (claude)..." \
+      && (npm install -g @anthropic-ai/claude-code 2>/dev/null || true); \
+    fi
 
 # OpenAI Codex CLI (codex)
-RUN (npm install -g @openai/codex 2>/dev/null || true) \
-    && (curl -fsSL https://codex.openai.com/install.sh | bash 2>/dev/null || true)
+RUN if [ "$INSTALL_CODEX" = "true" ]; then \
+      echo "📦 Installing OpenAI Codex CLI (codex)..." \
+      && (npm install -g @openai/codex 2>/dev/null || true) \
+      && (curl -fsSL https://codex.openai.com/install.sh | bash 2>/dev/null || true); \
+    fi
 
 # OpenCode CLI (opencode)
-RUN (curl -fsSL https://opencode.ai/install.sh | bash 2>/dev/null || true) \
-    && (npm install -g opencode-ai 2>/dev/null || true)
+RUN if [ "$INSTALL_OPENCODE" = "true" ]; then \
+      echo "📦 Installing OpenCode CLI (opencode)..." \
+      && (curl -fsSL https://opencode.ai/install.sh | bash 2>/dev/null || true) \
+      && (npm install -g opencode-ai 2>/dev/null || true); \
+    fi
 
 # Hermes Agent (hermes)
-RUN pip install --no-cache-dir --break-system-packages hermes-agent 2>/dev/null || true
+RUN if [ "$INSTALL_HERMES" = "true" ]; then \
+      echo "📦 Installing Hermes Agent (hermes)..." \
+      && (pip install --no-cache-dir --break-system-packages hermes-agent 2>/dev/null || true); \
+    fi
 
 # 3. Create a non-root developer user (UID 1000) with passwordless sudo
 ARG USER_NAME=developer

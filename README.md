@@ -40,11 +40,19 @@ It protects your host machine (home directory, SSH keys, credentials, and unrela
 
 ## 🚀 Quick Start
 
-### 1. Installation (One-Liner)
+### 1. Installation
 
 ```bash
 git clone https://github.com/j3bit/agent-docker.git ~/.config/agent-docker
-~/.config/agent-docker/install.sh
+cd ~/.config/agent-docker
+
+# Install all AI agents (Default)
+./install.sh
+
+# Install only specific agents (Optimizes build time & image size)
+./install.sh --claude --codex
+# or
+./install.sh --agy
 ```
 
 ### 2. Usage
