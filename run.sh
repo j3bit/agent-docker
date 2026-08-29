@@ -98,19 +98,22 @@ show_help() {
   echo "Defaults to the CURRENT WORKING DIRECTORY ($(pwd)) as the isolated workspace."
   echo ""
   echo "Options:"
-  echo "  -b, --build       Rebuild the Docker image"
+  echo "  -b, --build       Rebuild the Docker image using cache"
+  echo "  -u, --update      Force re-download and update all agents & toolchains (--no-cache)"
   echo "  -s, --shell       Open an interactive bash shell in the container instead of the agent"
   echo "  -h, --help        Show this help message"
   echo ""
   echo "Examples:"
   echo "  $CALLER_NAME                                  # Mounts current directory ($(pwd))"
-  echo "  $CALLER_NAME /path/to/project                 # Mounts specific directory"
+  echo "  $CALLER_NAME claude                           # Launch Claude Code"
+  echo "  $CALLER_NAME --update                         # Update all agents to latest versions"
   echo "  $CALLER_NAME --shell                          # Open bash in current directory sandbox"
   echo ""
 }
 
 # Parse options
 BUILD_ONLY=0
+NO_CACHE=0
 OPEN_SHELL=0
 TARGET_DIR=""
 EXTRA_ARGS=()
@@ -123,6 +126,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -b|--build)
       BUILD_ONLY=1
+      shift
+      ;;
+    -u|--update|--rebuild)
+      BUILD_ONLY=1
+      NO_CACHE=1
       shift
       ;;
     -s|--shell)
@@ -157,10 +165,18 @@ fi
 
 # Build image if requested or if it doesn't exist
 if [ "$BUILD_ONLY" -eq 1 ] || ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
-  echo "🔨 Building Docker image: $IMAGE_NAME..."
+  if [ "$NO_CACHE" -eq 1 ]; then
+    echo "🔄 Updating & rebuilding Docker image from scratch: $IMAGE_NAME..."
+    BUILD_EXTRA_FLAGS=(--no-cache --pull)
+  else
+    echo "🔨 Building Docker image: $IMAGE_NAME..."
+    BUILD_EXTRA_FLAGS=()
+  fi
+
   USER_UID=$(id -u)
   USER_GID=$(id -g)
   docker build \
+    "${BUILD_EXTRA_FLAGS[@]}" \
     --build-arg USER_UID="$USER_UID" \
     --build-arg USER_GID="$USER_GID" \
     -t "$IMAGE_NAME" \
