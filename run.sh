@@ -11,6 +11,33 @@ done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 IMAGE_NAME="agent-docker-sandbox:latest"
 
+# Load environment configuration file (~/.config/agent-docker/agent-docker.env) if present
+ENV_FILE="$SCRIPT_DIR/agent-docker.env"
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  source "$ENV_FILE"
+  set +a
+fi
+
+# Quick config inspection command
+if [ "${1:-}" = "config" ] || [ "${1:-}" = "--config" ]; then
+  echo "📄 Current Agent Docker Sandbox Configuration:"
+  echo "   Location: $ENV_FILE"
+  echo "============================================================"
+  if [ -f "$ENV_FILE" ]; then
+    cat "$ENV_FILE"
+  else
+    echo "INSTALL_AGY=true"
+    echo "INSTALL_CLAUDE=false"
+    echo "INSTALL_CODEX=false"
+    echo "INSTALL_OPENCODE=false"
+    echo "INSTALL_HERMES=false"
+  fi
+  echo "============================================================"
+  echo "💡 Edit $ENV_FILE to toggle agents, then run: agent-docker --build"
+  exit 0
+fi
+
 # Detect agent type from script name ($0)
 CALLER_NAME="$(basename "$0")"
 
@@ -52,28 +79,24 @@ case "$CALLER_NAME" in
     AGENT_BIN="claude"
     HERDR_KIND="claude"
     DEFAULT_FLAGS=("--dangerously-skip-permissions")
-    [ -d "$HOME/.claude" ] && AUTH_MOUNTS+=(-v "$HOME/.claude:/home/developer/.claude")
     ;;
   codex*|*codex*)
     AGENT_KIND="codex"
     AGENT_BIN="codex"
     HERDR_KIND="codex"
     DEFAULT_FLAGS=("--dangerously-bypass-approvals-and-sandbox")
-    [ -d "$HOME/.codex" ] && AUTH_MOUNTS+=(-v "$HOME/.codex:/home/developer/.codex")
     ;;
   opencode*|*opencode*)
     AGENT_KIND="opencode"
     AGENT_BIN="opencode"
     HERDR_KIND="opencode"
     DEFAULT_FLAGS=("--auto")
-    [ -d "$HOME/.config/opencode" ] && AUTH_MOUNTS+=(-v "$HOME/.config/opencode:/home/developer/.config/opencode")
     ;;
   hermes*|*hermes*)
     AGENT_KIND="hermes"
     AGENT_BIN="hermes"
     HERDR_KIND="hermes"
     DEFAULT_FLAGS=()
-    [ -d "$HOME/.hermes" ] && AUTH_MOUNTS+=(-v "$HOME/.hermes:/home/developer/.hermes")
     ;;
   *)
     # Default to agy
@@ -81,14 +104,16 @@ case "$CALLER_NAME" in
     AGENT_BIN="agy"
     HERDR_KIND="antigravity-cli"
     DEFAULT_FLAGS=("--dangerously-skip-permissions")
-    [ -d "$HOME/.gemini" ] && AUTH_MOUNTS+=(-v "$HOME/.gemini:/home/developer/.gemini")
     ;;
 esac
 
-# Mount GitHub CLI (gh) configuration if exists on host
-if [ -d "$HOME/.config/gh" ]; then
-  AUTH_MOUNTS+=(-v "$HOME/.config/gh:/home/developer/.config/gh")
-fi
+# Mount all agent configs, shared skills (~/.agents), and tools from host
+[ -d "$HOME/.gemini" ] && AUTH_MOUNTS+=(-v "$HOME/.gemini:/home/developer/.gemini")
+[ -d "$HOME/.claude" ] && AUTH_MOUNTS+=(-v "$HOME/.claude:/home/developer/.claude")
+[ -d "$HOME/.codex" ] && AUTH_MOUNTS+=(-v "$HOME/.codex:/home/developer/.codex")
+[ -d "$HOME/.agents" ] && AUTH_MOUNTS+=(-v "$HOME/.agents:/home/developer/.agents")
+[ -d "$HOME/.config/opencode" ] && AUTH_MOUNTS+=(-v "$HOME/.config/opencode:/home/developer/.config/opencode")
+[ -d "$HOME/.config/gh" ] && AUTH_MOUNTS+=(-v "$HOME/.config/gh:/home/developer/.config/gh")
 
 # Help message
 show_help() {
@@ -182,10 +207,20 @@ if [ "$BUILD_ONLY" -eq 1 ] || ! docker image inspect "$IMAGE_NAME" > /dev/null 2
     BUILD_EXTRA_FLAGS=()
   fi
 
+  # Auto-inject build arguments based on agent-docker.env settings
+  AGENT_BUILD_ARGS=(
+    --build-arg INSTALL_AGY="${INSTALL_AGY:-true}"
+    --build-arg INSTALL_CLAUDE="${INSTALL_CLAUDE:-false}"
+    --build-arg INSTALL_CODEX="${INSTALL_CODEX:-false}"
+    --build-arg INSTALL_OPENCODE="${INSTALL_OPENCODE:-false}"
+    --build-arg INSTALL_HERMES="${INSTALL_HERMES:-false}"
+  )
+
   USER_UID=$(id -u)
   USER_GID=$(id -g)
   docker build \
     "${BUILD_EXTRA_FLAGS[@]}" \
+    "${AGENT_BUILD_ARGS[@]}" \
     "${BUILD_ARGS[@]}" \
     --build-arg USER_UID="$USER_UID" \
     --build-arg USER_GID="$USER_GID" \
@@ -271,6 +306,8 @@ if [ "$OPEN_SHELL" -eq 1 ]; then
     -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
     -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
     -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+    -e HOST_HOME="$HOME" \
+    -e HOST_USER="$(whoami)" \
     -e GH_TOKEN="${GH_TOKEN:-}" \
     -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
     --entrypoint /bin/bash \
@@ -300,6 +337,8 @@ else
     "${CACHE_MOUNTS[@]}" \
     "${HERDR_MOUNTS[@]}" \
     -e TERM="xterm-256color" \
+    -e HOST_HOME="$HOME" \
+    -e HOST_USER="$(whoami)" \
     -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
     -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
     -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \

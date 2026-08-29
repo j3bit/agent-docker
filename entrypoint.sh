@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
+# Map host home directory (e.g. /Users/jeongsaebit) to container home (/home/developer)
+# so that all absolute symlinks pointing to ~/.agents, ~/.codex, ~/.claude, ~/.gemini resolve correctly!
+if [ -n "${HOST_HOME:-}" ] && [ "$HOST_HOME" != "/home/developer" ]; then
+    sudo mkdir -p "$(dirname "$HOST_HOME")" 2>/dev/null || true
+    sudo ln -sfn /home/developer "$HOST_HOME" 2>/dev/null || true
+fi
+
 # Print isolation banner
 echo "============================================================"
-echo " 🔒 Antigravity CLI Isolated Docker Sandbox"
+echo " 🔒 Isolated Docker Sandbox"
 echo " Working directory bound to: $(pwd)"
 echo " Filesystem restricted to this workspace only."
 echo "============================================================"

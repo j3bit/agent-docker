@@ -20,3 +20,8 @@ test-workspace/*
 .claude/
 .codex/
 .hermes/
+
+# User-specific local environment configuration
+agent-docker.env
+*.env
+*.env.local

@@ -70,12 +70,12 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 RUN pip install --no-cache-dir --break-system-packages "camoufox[geoip]" "camoufox-mcp" playwright \
     && (npm install -g --force @andrew-chen-wang/camoufox-mcp 2>/dev/null || true)
 
-# Build Arguments for Conditional Agent Installation (default: true)
+# Build Arguments for Conditional Agent Installation (default: only agy is true)
 ARG INSTALL_AGY=true
-ARG INSTALL_CLAUDE=true
-ARG INSTALL_CODEX=true
-ARG INSTALL_OPENCODE=true
-ARG INSTALL_HERMES=true
+ARG INSTALL_CLAUDE=false
+ARG INSTALL_CODEX=false
+ARG INSTALL_OPENCODE=false
+ARG INSTALL_HERMES=false
 
 # 2. AI Coding Agents Installation (Conditionally installed based on build args)
 # Antigravity CLI (agy)
