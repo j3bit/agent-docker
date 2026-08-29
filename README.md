@@ -19,7 +19,7 @@ It protects your host machine (home directory, SSH keys, credentials, and unrela
 ## 🌟 Key Features
 
 * **🛡️ Strict Filesystem Sandbox**: Agents are strictly confined to the directory where you launch them (`$(pwd)`). Access to your host OS, parent paths, and home directory is blocked by default.
-* **⚡ Unattended Full-Auto Mode**: Run agents with automated permission approvals (`--dangerously-skip-permissions`, `--full-auto`, `--auto`) with complete peace of mind because the execution environment is containerized.
+* **⚡ Unattended Full-Auto Mode**: Run agents with automated permission approvals (`--dangerously-skip-permissions`, `--dangerously-bypass-approvals-and-sandbox`, `--auto`) with complete peace of mind because the execution environment is containerized.
 * **🦊 Built-in Camoufox Anti-Detect Browser & MCP**: Includes a C++ patched stealth Firefox engine that bypasses Cloudflare Turnstile, Akamai, and bot detection systems. Automatically configured as an MCP server across all agents.
 * **🧰 Pre-Baked Modern Toolchain & Cache Continuity**: Ships with Python 3.12 (`uv`/`uvx`), Node.js 22 (`pnpm`), Rust (`cargo`/`rustc`), `ast-grep` (`sg`), `gh` (GitHub CLI), `ripgrep`, `fd`, `jq`, and `build-essential`. Package caches (`uv`, `npm`, `cargo`) persist across sessions in dedicated Docker volumes.
 * **🖥️ Native Herdr Multiplexer Integration**: Uses `exec -a <agent>` process spoofing and IPC socket passthrough so terminal managers like [Herdr](https://herdr.dev) and tmux automatically recognize active agents, track status, and send desktop notifications.

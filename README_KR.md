@@ -19,7 +19,7 @@
 ## 🌟 핵심 특징 (Key Features)
 
 * **🛡️ 완전한 파일시스템 격리 (Strict Sandbox)**: 에이전트는 명령을 실행한 현재 디렉토리(`$(pwd)`)와 그 하위 파일만 접근할 수 있으며, 호스트 머신의 상위 경로는 원천 차단됩니다.
-* **⚡ 무간섭 자율 코딩 모드 (Unattended Full-Auto)**: 이미 안전하게 격리되어 있으므로 매번 도구 실행 승인 팝업 없이 최고 속도로 코딩 작업을 수행합니다 (`--dangerously-skip-permissions`, `--full-auto`, `--auto` 자동 적용).
+* **⚡ 무간섭 자율 코딩 모드 (Unattended Full-Auto)**: 이미 안전하게 격리되어 있으므로 매번 도구 실행 승인 팝업 없이 최고 속도로 코딩 작업을 수행합니다 (`--dangerously-skip-permissions`, `--dangerously-bypass-approvals-and-sandbox`, `--auto` 자동 적용).
 * **🦊 Camoufox 안티디텍트 스텔스 브라우저 & MCP 내장**: Cloudflare, Datadome, 봇 방지 캡차가 걸린 사이트도 C++ 엔진 패치 기반 스텔스 브라우저로 감지 없이 스크래핑/렌더링하며, 모든 에이전트에 MCP 도구가 자동 등록됩니다.
 * **🧰 풍부한 개발 도구 & 캐시 연속성**: Python 3.12 (`uv`/`uvx`), Node.js 22 (`pnpm`), Rust (`cargo`/`rustc`), `ast-grep` (`sg`), `gh`, `ripgrep`, `fd`, `jq`, `tree` 사전 탑재. 패키지 캐시가 전용 볼륨에 영구 보존됩니다.
 * **🖥️ Herdr 멀티플렉서 완벽 연동**: `exec -a <agent>` 프로세스 위장 및 IPC 소켓 포워딩으로 `herdr` 터미널 사이드바에 각 에이전트의 상태와 실시간 완료 알림이 정상 수신됩니다.
