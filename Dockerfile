@@ -67,7 +67,7 @@ RUN ln -s $(which fdfind) /usr/local/bin/fd 2>/dev/null || true
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 # Install Camoufox (Anti-Detect Stealth Browser for AI Agents), Playwright, and Camoufox MCP Server
-RUN pip install --no-cache-dir --break-system-packages "camoufox[geoip]" "camoufox-mcp" playwright \
+RUN pip install --no-cache-dir --break-system-packages "camoufox[geoip]" "camoufox-mcp" "mcp<2" playwright \
     && (npm install -g --force @andrew-chen-wang/camoufox-mcp 2>/dev/null || true)
 
 # Build Arguments for Conditional Agent Installation (default: only agy is true)
