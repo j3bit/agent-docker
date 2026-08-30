@@ -8,11 +8,19 @@ if [ -n "${HOST_HOME:-}" ] && [ "$HOST_HOME" != "/home/developer" ]; then
     sudo ln -sfn /home/developer "$HOST_HOME" 2>/dev/null || true
 fi
 
-# Print isolation banner
+# Print isolation banner.
+# The agent config directories are mounted read-write on purpose, so that skills,
+# plugins and agent settings can be edited from inside the sandbox. That is a
+# deliberate hole in the isolation, so say so rather than claiming otherwise.
 echo "============================================================"
 echo " 🔒 Isolated Docker Sandbox"
 echo " Working directory bound to: $(pwd)"
-echo " Filesystem restricted to this workspace only."
+echo " Project files restricted to this workspace only."
+echo ""
+echo " ⚠️  Host agent configs are mounted READ-WRITE, not isolated:"
+echo "     ~/.claude  ~/.gemini  ~/.codex  ~/.agents  ~/.config/gh"
+echo "     An agent here can edit host settings/hooks/skills (which run"
+echo "     on the host later) and use host GitHub credentials."
 echo "============================================================"
 
 # Auto-configure Camoufox MCP Server for all active agents if not present
