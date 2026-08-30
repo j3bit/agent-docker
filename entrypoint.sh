@@ -103,7 +103,11 @@ GIT_CFG="$HOME/.gitconfig"
 if [ ! -f "$GIT_CFG" ]; then
     {
         echo "[safe]"
-        echo "    directory = /workspace"
+        # `*` rather than just /workspace: the uid mismatch is an artifact of the
+        # bind mount, so it applies equally to submodules, nested repos and
+        # worktrees, which a single /workspace entry would not cover. Everything
+        # reachable here is already inside the container.
+        echo "    directory = *"
         echo "[init]"
         echo "    defaultBranch = main"
         echo "[credential \"https://github.com\"]"
