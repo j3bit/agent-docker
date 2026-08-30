@@ -21,37 +21,40 @@ import os, json
 
 home = os.environ.get("HOME", "/home/developer")
 
-# 1. Claude Code (~/.claude/mcp.json)
-claude_dir = os.path.join(home, ".claude")
-os.makedirs(claude_dir, exist_ok=True)
-claude_mcp = os.path.join(claude_dir, "mcp.json")
+# 1. Claude Code (~/.claude.json)
+# NOTE: Claude Code reads user-scope MCP servers from ~/.claude.json, never from
+# ~/.claude/mcp.json -- writing the latter is a silent no-op.
+os.makedirs(os.path.join(home, ".claude"), exist_ok=True)
+claude_cfg = os.path.join(home, ".claude.json")
 try:
-    data = json.load(open(claude_mcp)) if os.path.exists(claude_mcp) else {}
-    if "mcpServers" not in data:
-        data["mcpServers"] = {}
-    if "camoufox" not in data["mcpServers"]:
-        data["mcpServers"]["camoufox"] = {"command": "camoufox-mcp"}
-        with open(claude_mcp, "w") as f:
+    data = json.load(open(claude_cfg)) if os.path.exists(claude_cfg) else {}
+    if not isinstance(data, dict):
+        data = {}
+    servers = data.get("mcpServers")
+    if not isinstance(servers, dict):
+        servers = {}
+        data["mcpServers"] = servers
+    if "camoufox" not in servers:
+        servers["camoufox"] = {"type": "stdio", "command": "camoufox-mcp", "args": [], "env": {}}
+        with open(claude_cfg, "w") as f:
             json.dump(data, f, indent=2)
 except Exception:
     pass
 
-# 2. Antigravity (~/.gemini/antigravity-cli/mcp/camoufox.json)
-gemini_mcp_dir = os.path.join(home, ".gemini", "antigravity-cli", "mcp")
-os.makedirs(gemini_mcp_dir, exist_ok=True)
-gemini_mcp = os.path.join(gemini_mcp_dir, "camoufox.json")
-if not os.path.exists(gemini_mcp):
-    try:
+# 2. Antigravity (~/.gemini/config/mcp_config.json)
+gemini_config_dir = os.path.join(home, ".gemini", "config")
+os.makedirs(gemini_config_dir, exist_ok=True)
+gemini_mcp = os.path.join(gemini_config_dir, "mcp_config.json")
+try:
+    data = json.load(open(gemini_mcp)) if os.path.exists(gemini_mcp) else {}
+    if "mcpServers" not in data:
+        data["mcpServers"] = {}
+    if "camoufox" not in data["mcpServers"]:
+        data["mcpServers"]["camoufox"] = {"command": "camoufox-mcp"}
         with open(gemini_mcp, "w") as f:
-            json.dump({
-                "mcpServers": {
-                    "camoufox": {
-                        "command": "camoufox-mcp"
-                    }
-                }
-            }, f, indent=2)
-    except Exception:
-        pass
+            json.dump(data, f, indent=2)
+except Exception:
+    pass
 
 # 3. OpenCode (~/.config/opencode/opencode.json)
 opencode_dir = os.path.join(home, ".config", "opencode")
