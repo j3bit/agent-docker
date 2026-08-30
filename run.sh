@@ -107,6 +107,12 @@ case "$CALLER_NAME" in
     ;;
 esac
 
+# Git commit identity, read from the host's global gitconfig.
+# The host ~/.gitconfig itself is intentionally NOT mounted (see entrypoint.sh
+# for why); only the name/email are passed through as plain values.
+GIT_USER_NAME="$(git config --global user.name 2>/dev/null || true)"
+GIT_USER_EMAIL="$(git config --global user.email 2>/dev/null || true)"
+
 # Mount all agent configs, shared skills (~/.agents), and tools from host
 [ -d "$HOME/.gemini" ] && AUTH_MOUNTS+=(-v "$HOME/.gemini:/home/developer/.gemini")
 [ -d "$HOME/.claude" ] && AUTH_MOUNTS+=(-v "$HOME/.claude:/home/developer/.claude")
@@ -324,6 +330,8 @@ if [ "$OPEN_SHELL" -eq 1 ]; then
     -e HOST_USER="$(whoami)" \
     -e GH_TOKEN="${GH_TOKEN:-}" \
     -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
+    -e GIT_USER_NAME="$GIT_USER_NAME" \
+    -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
     --entrypoint /bin/bash \
     "$IMAGE_NAME"
 else
@@ -359,6 +367,8 @@ else
     -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
     -e GH_TOKEN="${GH_TOKEN:-}" \
     -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
+    -e GIT_USER_NAME="$GIT_USER_NAME" \
+    -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
     "$IMAGE_NAME" \
     "$AGENT_BIN" "${EXEC_ARGS[@]}"
 fi

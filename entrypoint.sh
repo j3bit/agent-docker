@@ -84,6 +84,35 @@ except Exception:
     pass
 EOF
 
+# Auto-configure a container-only ~/.gitconfig.
+# The host's ~/.gitconfig is never mounted: it typically references host-only
+# tools (pager, editor, credential helper paths) that don't exist in the image,
+# and Docker Desktop's bind mount exposes /workspace as owned by a different
+# uid than the container's user, which git refuses to touch without
+# safe.directory. Both break every git command (status, diff, commit) until
+# fixed here.
+GIT_CFG="$HOME/.gitconfig"
+if [ ! -f "$GIT_CFG" ]; then
+    {
+        echo "[safe]"
+        echo "    directory = /workspace"
+        echo "[init]"
+        echo "    defaultBranch = main"
+        echo "[credential \"https://github.com\"]"
+        echo "    helper = !gh auth git-credential"
+        echo "[credential \"https://gist.github.com\"]"
+        echo "    helper = !gh auth git-credential"
+    } > "$GIT_CFG"
+fi
+# Always keep author identity in sync with what was passed in from the host
+# (agent-docker.env / run.sh), without clobbering any other local edits.
+if [ -n "${GIT_USER_NAME:-}" ]; then
+    git config --global user.name "$GIT_USER_NAME"
+fi
+if [ -n "${GIT_USER_EMAIL:-}" ]; then
+    git config --global user.email "$GIT_USER_EMAIL"
+fi
+
 # Execute passed command (Default: agy with auto-approved permissions in sandbox)
 if [ "$#" -eq 0 ]; then
     exec agy --dangerously-skip-permissions
