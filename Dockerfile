@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
     git \
+    git-lfs \
+    bubblewrap \
+    socat \
     build-essential \
     python3 \
     python3-pip \
