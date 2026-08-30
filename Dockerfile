@@ -86,42 +86,53 @@ ARG INSTALL_HERMES=false
 # the layer succeeds. Silently swallowing installer errors produces an image
 # that builds green but is missing the agent the user asked for, which only
 # surfaces much later as "command not found".
+#
+# `curl | bash` cannot be trusted to report failure: if curl 404s, bash still
+# reads an empty script and exits 0. The explicit check below is what actually
+# catches a failed install, so keep it on every agent.
 
 # Antigravity CLI (agy)
 RUN if [ "$INSTALL_AGY" = "true" ]; then \
       echo "📦 Installing Antigravity CLI (agy)..." \
       && curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- -d /usr/local/bin \
-      && command -v agy > /dev/null; \
+      && { command -v agy > /dev/null \
+           || { echo "❌ agy was requested but is not on PATH after install"; exit 1; }; }; \
     fi
 
 # Claude Code CLI (claude)
 RUN if [ "$INSTALL_CLAUDE" = "true" ]; then \
       echo "📦 Installing Claude Code CLI (claude)..." \
       && npm install -g @anthropic-ai/claude-code \
-      && command -v claude > /dev/null; \
+      && { command -v claude > /dev/null \
+           || { echo "❌ claude was requested but is not on PATH after install"; exit 1; }; }; \
     fi
 
-# OpenAI Codex CLI (codex) -- npm is primary, the official installer is the fallback
+# OpenAI Codex CLI (codex)
+# npm only: there is no official standalone install script (codex.openai.com does
+# not resolve), so a curl fallback would just be a silent no-op.
 RUN if [ "$INSTALL_CODEX" = "true" ]; then \
       echo "📦 Installing OpenAI Codex CLI (codex)..." \
-      && (npm install -g @openai/codex \
-          || curl -fsSL https://codex.openai.com/install.sh | bash) \
-      && command -v codex > /dev/null; \
+      && npm install -g @openai/codex \
+      && { command -v codex > /dev/null \
+           || { echo "❌ codex was requested but is not on PATH after install"; exit 1; }; }; \
     fi
 
-# OpenCode CLI (opencode) -- npm is primary, the official installer is the fallback
+# OpenCode CLI (opencode) -- npm is primary, the official installer is the fallback.
+# Note the installer lives at /install, not /install.sh (which 404s).
 RUN if [ "$INSTALL_OPENCODE" = "true" ]; then \
       echo "📦 Installing OpenCode CLI (opencode)..." \
       && (npm install -g opencode-ai \
-          || curl -fsSL https://opencode.ai/install.sh | bash) \
-      && command -v opencode > /dev/null; \
+          || curl -fsSL https://opencode.ai/install | bash) \
+      && { command -v opencode > /dev/null \
+           || { echo "❌ opencode was requested but is not on PATH after install"; exit 1; }; }; \
     fi
 
 # Hermes Agent (hermes)
 RUN if [ "$INSTALL_HERMES" = "true" ]; then \
       echo "📦 Installing Hermes Agent (hermes)..." \
       && pip install --no-cache-dir --break-system-packages hermes-agent \
-      && command -v hermes > /dev/null; \
+      && { command -v hermes > /dev/null \
+           || { echo "❌ hermes was requested but is not on PATH after install"; exit 1; }; }; \
     fi
 
 # Disable agent self-updates. Agents are installed as root into /usr/lib/node_modules
@@ -147,6 +158,19 @@ RUN su ${USER_NAME} -c "python3 -m camoufox fetch"
 # Environment variables for user and binary PATHs
 ENV HOME=/home/${USER_NAME}
 ENV PATH="/usr/local/cargo/bin:/home/${USER_NAME}/.gemini/antigravity-cli/bin:/home/${USER_NAME}/.local/bin:/usr/local/bin:${PATH}"
+
+# Re-verify every requested agent as the unprivileged runtime user.
+# The per-agent checks during installation run as root, so an installer that drops
+# its binary somewhere only root can reach (the Antigravity installer reports
+# /root/.local/bin, for instance) would satisfy them and still be missing at
+# runtime. This is the check that matches how the container is actually used.
+RUN for spec in "$INSTALL_AGY:agy" "$INSTALL_CLAUDE:claude" "$INSTALL_CODEX:codex" \
+                "$INSTALL_OPENCODE:opencode" "$INSTALL_HERMES:hermes"; do \
+      want="${spec%%:*}"; bin="${spec##*:}"; \
+      [ "$want" = "true" ] || continue; \
+      su ${USER_NAME} -s /bin/sh -c "PATH='$PATH' command -v $bin > /dev/null" \
+        || { echo "❌ $bin is installed but not reachable by ${USER_NAME} at runtime"; exit 1; }; \
+    done
 
 # Workspace directory
 WORKDIR /workspace
