@@ -141,7 +141,7 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
 
 대신 entrypoint가 컨테이너 전용 `~/.gitconfig`를 생성합니다:
 
-* `safe.directory = /workspace` — Docker Desktop이 바인드 마운트를 컨테이너 유저와 다른 UID로 노출하기 때문에, 이게 없으면 git이 모든 명령을 `detected dubious ownership`으로 거부합니다.
+* `safe.directory = *` — Docker Desktop이 바인드 마운트를 컨테이너 유저와 다른 UID로 노출하기 때문에, 이게 없으면 git이 모든 명령을 `detected dubious ownership`으로 거부합니다. 와일드카드라 서브모듈·중첩 repo·worktree까지 함께 커버합니다. 여기서 닿는 모든 경로는 이미 컨테이너 안입니다.
 * `credential.helper = !gh auth git-credential` — 컨테이너 자체의 `gh`를 사용합니다.
 * `init.defaultBranch = main`.
 
@@ -187,9 +187,13 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
 
 ### 에이전트 자동 업데이트
 
-자동 업데이트는 꺼져 있습니다 (`DISABLE_AUTOUPDATER=1`). 에이전트는 root로 설치되지만 실행은
-권한 없는 `developer` 유저로 하며, 어차피 `--rm` 때문에 런타임에 받은 업데이트는 사라집니다.
-버전 관리 단위는 이미지이므로 최신화는 `agent-docker --update`로 하세요.
+자동 업데이트는 꺼져 있습니다 — `DISABLE_AUTOUPDATER=1`(Claude Code),
+`OPENCODE_DISABLE_AUTOUPDATE=1`, `AGY_CLI_DISABLE_AUTO_UPDATE=true`. Codex는 별도 변수가
+필요 없습니다. npm 런처가 `CODEX_MANAGED_BY_NPM`을 설정해 자체 업데이트를 이미 막습니다.
+
+에이전트는 root로 설치되지만 실행은 권한 없는 `developer` 유저로 하며, 어차피 `--rm` 때문에
+런타임에 받은 업데이트는 사라집니다. 버전 관리 단위는 이미지이므로, 이제 스스로 갱신되는 것이
+없는 만큼 `agent-docker --update`를 주기적으로 돌려주셔야 합니다.
 
 ---
 

@@ -141,7 +141,7 @@ exist in the image and would break every `git` invocation.
 
 Instead the entrypoint generates a container-local `~/.gitconfig`:
 
-* `safe.directory = /workspace` — Docker Desktop exposes the bind mount under a different UID than the container user, which otherwise makes git refuse every command with `detected dubious ownership`.
+* `safe.directory = *` — Docker Desktop exposes the bind mount under a different UID than the container user, which otherwise makes git refuse every command with `detected dubious ownership`. The wildcard covers submodules, nested repositories and worktrees too; everything reachable here is already inside the container.
 * `credential.helper = !gh auth git-credential` — uses the container's own `gh`.
 * `init.defaultBranch = main`.
 
@@ -188,9 +188,14 @@ loss of shared skills.
 
 ### Agent self-updates
 
-Self-updating is disabled (`DISABLE_AUTOUPDATER=1`). Agents are installed as root but run as
-the unprivileged `developer` user, and `--rm` would discard any runtime update anyway. The
-image is the unit of versioning — use `agent-docker --update` to pull the latest agents.
+Self-updating is disabled: `DISABLE_AUTOUPDATER=1` (Claude Code),
+`OPENCODE_DISABLE_AUTOUPDATE=1` and `AGY_CLI_DISABLE_AUTO_UPDATE=true`. Codex needs no
+variable — its npm launcher sets `CODEX_MANAGED_BY_NPM`, which already suppresses
+self-update.
+
+Agents are installed as root but run as the unprivileged `developer` user, and `--rm` would
+discard any runtime update anyway. The image is the unit of versioning — run
+`agent-docker --update` periodically, since nothing will now update itself.
 
 ---
 
