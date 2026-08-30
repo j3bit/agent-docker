@@ -124,6 +124,14 @@ RUN if [ "$INSTALL_HERMES" = "true" ]; then \
       && command -v hermes > /dev/null; \
     fi
 
+# Disable agent self-updates. Agents are installed as root into /usr/lib/node_modules
+# but run as the unprivileged `developer` user, so a self-update cannot write there
+# and fails on every launch. Even with the permissions opened up it would be wasted
+# work: containers run with `--rm`, so an update downloaded at runtime is discarded
+# on exit and re-downloaded on the next launch. The image is the unit of versioning
+# here -- use `agent-docker --update` (docker build --no-cache --pull) to upgrade.
+ENV DISABLE_AUTOUPDATER=1
+
 # 3. Create a non-root developer user (UID 1000) with passwordless sudo
 ARG USER_NAME=developer
 ARG USER_UID=1000
