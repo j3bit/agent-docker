@@ -141,7 +141,12 @@ RUN if [ "$INSTALL_HERMES" = "true" ]; then \
 # work: containers run with `--rm`, so an update downloaded at runtime is discarded
 # on exit and re-downloaded on the next launch. The image is the unit of versioning
 # here -- use `agent-docker --update` (docker build --no-cache --pull) to upgrade.
+#
+# One variable per agent; there is no shared convention. Codex needs none: its npm
+# launcher sets CODEX_MANAGED_BY_NPM, which already suppresses self-update.
 ENV DISABLE_AUTOUPDATER=1
+ENV OPENCODE_DISABLE_AUTOUPDATE=1
+ENV AGY_CLI_DISABLE_AUTO_UPDATE=true
 
 # 3. Create a non-root developer user (UID 1000) with passwordless sudo
 ARG USER_NAME=developer
