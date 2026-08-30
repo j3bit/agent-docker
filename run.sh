@@ -270,6 +270,18 @@ fi
 echo "🚀 Starting Isolated Sandbox [$AGENT_KIND]"
 echo "📂 Workspace Mount: $TARGET_DIR -> /workspace"
 
+# Warn when the workspace contains agent-docker.env. Secrets in it are passed to
+# the container as environment variables anyway, but mounting the directory that
+# holds them also exposes the file itself to an agent running with auto-approval.
+# This is easy to hit by accident: it happens whenever you run the sandbox from
+# inside the agent-docker checkout to work on the sandbox itself.
+if [ -f "$ENV_FILE" ] && case "$ENV_FILE" in "$TARGET_DIR"/*) true ;; *) false ;; esac; then
+  if grep -qE '^[A-Z_]*(TOKEN|KEY|SECRET)=.+' "$ENV_FILE" 2>/dev/null; then
+    echo "⚠️  $(basename "$ENV_FILE") holds secrets and is inside this workspace;"
+    echo "    the agent can read it. Move secrets out or run from another directory."
+  fi
+fi
+
 # Persistent tool and package caches (uv, npm, pip, cargo) across all workspaces
 CACHE_MOUNTS=(
   -v "agy-uv-cache:/home/developer/.cache/uv"
