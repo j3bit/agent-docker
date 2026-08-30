@@ -81,36 +81,47 @@ ARG INSTALL_OPENCODE=false
 ARG INSTALL_HERMES=false
 
 # 2. AI Coding Agents Installation (Conditionally installed based on build args)
+#
+# Every block verifies that the requested binary is actually resolvable before
+# the layer succeeds. Silently swallowing installer errors produces an image
+# that builds green but is missing the agent the user asked for, which only
+# surfaces much later as "command not found".
+
 # Antigravity CLI (agy)
 RUN if [ "$INSTALL_AGY" = "true" ]; then \
       echo "📦 Installing Antigravity CLI (agy)..." \
-      && curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- -d /usr/local/bin; \
+      && curl -fsSL https://antigravity.google/cli/install.sh | bash -s -- -d /usr/local/bin \
+      && command -v agy > /dev/null; \
     fi
 
 # Claude Code CLI (claude)
 RUN if [ "$INSTALL_CLAUDE" = "true" ]; then \
       echo "📦 Installing Claude Code CLI (claude)..." \
-      && (npm install -g @anthropic-ai/claude-code 2>/dev/null || true); \
+      && npm install -g @anthropic-ai/claude-code \
+      && command -v claude > /dev/null; \
     fi
 
-# OpenAI Codex CLI (codex)
+# OpenAI Codex CLI (codex) -- npm is primary, the official installer is the fallback
 RUN if [ "$INSTALL_CODEX" = "true" ]; then \
       echo "📦 Installing OpenAI Codex CLI (codex)..." \
-      && (npm install -g @openai/codex 2>/dev/null || true) \
-      && (curl -fsSL https://codex.openai.com/install.sh | bash 2>/dev/null || true); \
+      && (npm install -g @openai/codex \
+          || curl -fsSL https://codex.openai.com/install.sh | bash) \
+      && command -v codex > /dev/null; \
     fi
 
-# OpenCode CLI (opencode)
+# OpenCode CLI (opencode) -- npm is primary, the official installer is the fallback
 RUN if [ "$INSTALL_OPENCODE" = "true" ]; then \
       echo "📦 Installing OpenCode CLI (opencode)..." \
-      && (curl -fsSL https://opencode.ai/install.sh | bash 2>/dev/null || true) \
-      && (npm install -g opencode-ai 2>/dev/null || true); \
+      && (npm install -g opencode-ai \
+          || curl -fsSL https://opencode.ai/install.sh | bash) \
+      && command -v opencode > /dev/null; \
     fi
 
 # Hermes Agent (hermes)
 RUN if [ "$INSTALL_HERMES" = "true" ]; then \
       echo "📦 Installing Hermes Agent (hermes)..." \
-      && (pip install --no-cache-dir --break-system-packages hermes-agent 2>/dev/null || true); \
+      && pip install --no-cache-dir --break-system-packages hermes-agent \
+      && command -v hermes > /dev/null; \
     fi
 
 # 3. Create a non-root developer user (UID 1000) with passwordless sudo
