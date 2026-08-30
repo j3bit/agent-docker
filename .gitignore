@@ -25,3 +25,6 @@ test-workspace/*
 agent-docker.env
 *.env
 *.env.local
+
+# Persistent container-side agent state (logins, onboarding)
+state/

@@ -115,6 +115,19 @@ esac
 [ -d "$HOME/.config/opencode" ] && AUTH_MOUNTS+=(-v "$HOME/.config/opencode:/home/developer/.config/opencode")
 [ -d "$HOME/.config/gh" ] && AUTH_MOUNTS+=(-v "$HOME/.config/gh:/home/developer/.config/gh")
 
+# Persistent container-side agent state (survives `docker run --rm`)
+STATE_DIR="$SCRIPT_DIR/state"
+mkdir -p "$STATE_DIR"
+
+# Claude Code splits its state across TWO locations:
+#   ~/.claude/     -> settings, skills, hooks, credentials  (mounted from the host above)
+#   ~/.claude.json -> onboarding flag, oauthAccount, user-scope MCP servers, project trust
+# Mounting only the directory makes every --rm run re-run onboarding and ask to log in again.
+# Keep a container-dedicated ~/.claude.json here rather than sharing the host's (macOS state differs).
+CLAUDE_STATE_JSON="$STATE_DIR/claude.json"
+[ -f "$CLAUDE_STATE_JSON" ] || echo '{}' > "$CLAUDE_STATE_JSON"
+AUTH_MOUNTS+=(-v "$CLAUDE_STATE_JSON:/home/developer/.claude.json")
+
 # Help message
 show_help() {
   echo "Usage: $CALLER_NAME [OPTIONS] [TARGET_DIRECTORY] [-- AGENT_FLAGS...]"
@@ -305,6 +318,7 @@ if [ "$OPEN_SHELL" -eq 1 ]; then
     -e TERM="xterm-256color" \
     -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
     -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+    -e CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}" \
     -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
     -e HOST_HOME="$HOME" \
     -e HOST_USER="$(whoami)" \
@@ -341,6 +355,7 @@ else
     -e HOST_USER="$(whoami)" \
     -e GEMINI_API_KEY="${GEMINI_API_KEY:-}" \
     -e ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+    -e CLAUDE_CODE_OAUTH_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}" \
     -e OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
     -e GH_TOKEN="${GH_TOKEN:-}" \
     -e GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
