@@ -125,6 +125,26 @@ if [ -n "${GIT_USER_EMAIL:-}" ]; then
     git config --global user.email "$GIT_USER_EMAIL"
 fi
 
+# Report skills whose symlink does not resolve inside the container.
+# Shared skills are often chained (~/.claude/skills/x -> ~/.agents/skills/x ->
+# ~/.codex/skills/x), so a skill silently disappears whenever any directory in
+# that chain is not mounted, or when it points outside $HOME entirely. Agents
+# just show a shorter skill list, giving no hint that anything is missing.
+for skills_dir in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
+    [ -d "$skills_dir" ] || continue
+    broken=""
+    for skill in "$skills_dir"/*; do
+        [ -e "$skill" ] && continue          # resolves fine
+        [ -L "$skill" ] || continue          # not a dangling symlink; ignore
+        broken="$broken $(basename "$skill")"
+    done
+    if [ -n "$broken" ]; then
+        echo "⚠️  Unresolved skills in ${skills_dir#$HOME/}:$broken"
+        echo "    Their symlink target is not reachable in the container."
+        echo "    Check that every directory in the chain is mounted (run.sh)."
+    fi
+done
+
 # Execute passed command (Default: agy with auto-approved permissions in sandbox)
 if [ "$#" -eq 0 ]; then
     exec agy --dangerously-skip-permissions
