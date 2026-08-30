@@ -1,32 +1,64 @@
+# Compose definition kept in sync with run.sh.
+#
+# run.sh is the primary entrypoint and supports agent routing, Herdr passthrough
+# and TTY detection; this file covers the "just bring the sandbox up" case.
+# Select the agent with AGENT_CMD, e.g.:
+#
+#   WORKSPACE_DIR=~/Dev/my-project AGENT_CMD=claude docker compose run --rm agent
+#
 services:
-  agy:
+  agent:
     build:
       context: .
       args:
         USER_UID: ${UID:-1000}
         USER_GID: ${GID:-1000}
-    image: agy-docker-sandbox:latest
-    container_name: agy-sandbox
+        INSTALL_AGY: ${INSTALL_AGY:-true}
+        INSTALL_CLAUDE: ${INSTALL_CLAUDE:-false}
+        INSTALL_CODEX: ${INSTALL_CODEX:-false}
+        INSTALL_OPENCODE: ${INSTALL_OPENCODE:-false}
+        INSTALL_HERMES: ${INSTALL_HERMES:-false}
+    image: agent-docker-sandbox:latest
+    container_name: agent-docker-sandbox
     restart: "no"
     stdin_open: true
     tty: true
     working_dir: /workspace
-    command: ["agy", "--dangerously-skip-permissions"]
+    command: ["${AGENT_CMD:-agy}", "--dangerously-skip-permissions"]
     volumes:
       # Mount target workspace directory (Restricted filesystem scope)
       - ${WORKSPACE_DIR:-./test-workspace}:/workspace
-      # Mount host Gemini / Antigravity authentication & configuration
+      # Host agent configs, mounted read-write so skills/plugins/settings stay editable
       - ${HOME}/.gemini:/home/developer/.gemini
+      - ${HOME}/.claude:/home/developer/.claude
+      - ${HOME}/.codex:/home/developer/.codex
+      - ${HOME}/.agents:/home/developer/.agents
+      - ${HOME}/.config/gh:/home/developer/.config/gh
+      # Container-dedicated ~/.claude.json (onboarding, oauthAccount, user MCP servers).
+      # Kept separate from the host's so the sandbox survives `--rm` without
+      # overwriting macOS-side state. Created by run.sh; see its comments.
+      - ./state/claude.json:/home/developer/.claude.json
       # Persistent tool caches across workspaces
       - agy-uv-cache:/home/developer/.cache/uv
       - agy-npm-cache:/home/developer/.npm
       - agy-pip-cache:/home/developer/.cache/pip
+      - agy-cargo-cache:/home/developer/.cargo/registry
+      - agy-cargo-git:/home/developer/.cargo/git
     environment:
       - TERM=xterm-256color
+      - HOST_HOME=${HOME}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GH_TOKEN=${GH_TOKEN:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GIT_USER_NAME=${GIT_USER_NAME:-}
+      - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}
 
 volumes:
   agy-uv-cache:
   agy-npm-cache:
   agy-pip-cache:
-
+  agy-cargo-cache:
+  agy-cargo-git:
