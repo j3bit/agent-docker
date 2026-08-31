@@ -118,6 +118,7 @@ GIT_USER_EMAIL="$(git config --global user.email 2>/dev/null || true)"
 [ -d "$HOME/.claude" ] && AUTH_MOUNTS+=(-v "$HOME/.claude:/home/developer/.claude")
 [ -d "$HOME/.codex" ] && AUTH_MOUNTS+=(-v "$HOME/.codex:/home/developer/.codex")
 [ -d "$HOME/.agents" ] && AUTH_MOUNTS+=(-v "$HOME/.agents:/home/developer/.agents")
+[ -d "$HOME/.hermes" ] && AUTH_MOUNTS+=(-v "$HOME/.hermes:/home/developer/.hermes")
 [ -d "$HOME/.config/opencode" ] && AUTH_MOUNTS+=(-v "$HOME/.config/opencode:/home/developer/.config/opencode")
 [ -d "$HOME/.config/gh" ] && AUTH_MOUNTS+=(-v "$HOME/.config/gh:/home/developer/.config/gh")
 

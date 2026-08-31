@@ -157,7 +157,7 @@ Your commit identity is read from the host's global git config and passed throug
   ~/.ssh, ~/.aws, ~/Documents, other repos  ──► 🛡️ Not mounted
   $(pwd) (Current Project Directory)        ──► 📂 Bound to /workspace
   ~/.gemini ~/.claude ~/.codex              ──► ⚠️ Mounted READ-WRITE
-  ~/.agents ~/.config/gh                    ──► ⚠️ Mounted READ-WRITE
+  ~/.agents ~/.hermes ~/.config/gh          ──► ⚠️ Mounted READ-WRITE
 
 [Docker Container (/workspace)]
   Developer User (Matched UID/GID to Host)

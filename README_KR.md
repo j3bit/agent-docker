@@ -157,7 +157,7 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
   ~/.ssh, ~/.aws, ~/Documents, 다른 저장소   ──► 🛡️ 마운트 안 됨
   $(pwd) (현재 프로젝트 디렉토리)            ──► 📂 /workspace 로 연결
   ~/.gemini ~/.claude ~/.codex               ──► ⚠️ 읽기/쓰기 마운트
-  ~/.agents ~/.config/gh                     ──► ⚠️ 읽기/쓰기 마운트
+  ~/.agents ~/.hermes ~/.config/gh           ──► ⚠️ 읽기/쓰기 마운트
 
 [Docker 컨테이너 (/workspace)]
   Developer 유저 (호스트와 UID/GID 일치)
