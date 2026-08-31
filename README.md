@@ -98,6 +98,42 @@ agent-docker --update
 
 ---
 
+## 🩺 Checking That an Agent Works
+
+Launching an agent's TUI to see whether it is healthy is awkward, and tells you
+little when it is not. `smoke-test.sh` sends each installed agent one throwaway
+prompt and classifies the answer:
+
+```bash
+./smoke-test.sh              # all agents
+./smoke-test.sh claude codex # only these
+```
+
+```text
+🔎 Sandbox agent smoke test (agent-docker-sandbox:latest)
+  agy        OK
+  claude     OK
+  codex      OK
+  opencode   CONFIG
+  hermes     ACCOUNT
+```
+
+| Verdict | Meaning |
+| :--- | :--- |
+| `OK` | Reached the model and answered. |
+| `AUTH` | Could not authenticate — a mount or token is missing. **This is a sandbox problem.** |
+| `ACCOUNT` | Authenticated, but the account or model was refused (quota, entitlement). |
+| `CONFIG` | Inherited a host-only model or provider it cannot reach here. |
+| `SKIP` | Not installed in this image. |
+| `FAIL` | Something else; the raw output is printed. |
+
+Only `AUTH` and `FAIL` point at the sandbox. `ACCOUNT` and `CONFIG` mean the
+container is fine and the model choice needs attention on the host — OpenCode,
+for example, defaults to a local Apple-Silicon model that no Linux container can
+reach, so pass `--model` with a cloud model or change the host default.
+
+---
+
 ## 🔑 Authentication
 
 Host login sessions are mounted through, so most agents work with no extra setup.
@@ -207,6 +243,7 @@ discard any runtime update anyway. The image is the unit of versioning — run
 ├── entrypoint.sh           # Container entrypoint: MCP + git auto-configuration
 ├── run.sh                  # Intelligent launcher, credential router, and Herdr bridge
 ├── install.sh              # Interactive agent selection & build installer
+├── smoke-test.sh           # One-prompt health check for every installed agent
 ├── agent-docker.env        # Your local config: agents to install, auth tokens (git-ignored)
 ├── agent-docker.env.example # Template for the above
 ├── docker-compose.yml      # Compose definition, kept in sync with run.sh

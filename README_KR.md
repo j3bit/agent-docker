@@ -98,6 +98,41 @@ agent-docker --update
 
 ---
 
+## 🩺 에이전트가 실제로 동작하는지 확인하기
+
+에이전트 TUI를 띄워서 눈으로 확인하는 건 번거롭고, 안 될 때 이유도 알려주지 않습니다.
+`smoke-test.sh`는 설치된 각 에이전트에 일회성 프롬프트를 하나씩 보내고 결과를 분류합니다:
+
+```bash
+./smoke-test.sh              # 전체
+./smoke-test.sh claude codex # 지정한 것만
+```
+
+```text
+🔎 Sandbox agent smoke test (agent-docker-sandbox:latest)
+  agy        OK
+  claude     OK
+  codex      OK
+  opencode   CONFIG
+  hermes     ACCOUNT
+```
+
+| 판정 | 의미 |
+| :--- | :--- |
+| `OK` | 모델까지 도달해서 정상 응답. |
+| `AUTH` | 인증 실패 — 마운트나 토큰 누락. **샌드박스 문제입니다.** |
+| `ACCOUNT` | 인증은 됐지만 계정/모델이 거부됨 (사용량 한도, 권한). |
+| `CONFIG` | 컨테이너에서 닿을 수 없는 호스트 전용 모델/provider를 물려받음. |
+| `SKIP` | 이 이미지에 설치되지 않음. |
+| `FAIL` | 그 외. 원본 출력을 함께 표시합니다. |
+
+샌드박스를 의심해야 하는 건 `AUTH`와 `FAIL`뿐입니다. `ACCOUNT`와 `CONFIG`는 컨테이너는
+정상이고 호스트 쪽 모델 설정을 손봐야 한다는 뜻입니다. 예를 들어 OpenCode는 Apple Silicon
+전용 로컬 모델을 기본값으로 쓰는 경우가 있는데, 리눅스 컨테이너에서는 닿을 수 없으므로
+`--model`로 클라우드 모델을 지정하거나 호스트 기본값을 바꿔야 합니다.
+
+---
+
 ## 🔑 인증 (Authentication)
 
 호스트의 로그인 세션이 그대로 마운트되므로 대부분의 에이전트는 추가 설정이 필요 없습니다.
@@ -205,6 +240,7 @@ CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
 ├── entrypoint.sh           # 컨테이너 entrypoint: MCP 및 git 자동 설정
 ├── run.sh                  # 실행 런처, 인증 라우터, Herdr 브리지
 ├── install.sh              # 대화형 에이전트 선택 및 빌드 설치 스크립트
+├── smoke-test.sh           # 설치된 각 에이전트를 프롬프트 1개로 점검
 ├── agent-docker.env        # 로컬 설정: 설치할 에이전트, 인증 토큰 (git 제외)
 ├── agent-docker.env.example # 위 파일의 템플릿
 ├── docker-compose.yml      # run.sh 와 동기화된 Compose 정의
