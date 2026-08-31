@@ -157,6 +157,12 @@ RUN groupadd -g ${USER_GID} ${USER_NAME} 2>/dev/null || true \
     && useradd -m -s /bin/bash -u ${USER_UID} -g ${USER_GID} ${USER_NAME} 2>/dev/null || true \
     && echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Pre-create the XDG directories the agents write to, owned by the runtime user.
+# Docker creates any missing parent of a bind mount as root, so mounting e.g.
+# ~/.local/share/opencode would leave ~/.local and ~/.local/share root-owned and
+# the agent then cannot create its sibling ~/.local/state (EACCES at startup).
+RUN su ${USER_NAME} -c "mkdir -p ~/.local/share ~/.local/state ~/.local/bin ~/.cache ~/.config"
+
 # Pre-fetch Camoufox browser binaries for developer user
 RUN su ${USER_NAME} -c "python3 -m camoufox fetch"
 
