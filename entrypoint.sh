@@ -65,17 +65,31 @@ except Exception:
     pass
 
 # 3. OpenCode (~/.config/opencode/opencode.json)
+# NOTE: the key is "mcp", not "mcpServers", and `command` is an array whose
+# first element is the executable. See the "mcp" property of
+# https://opencode.ai/config.json -- an unknown top-level key is ignored, so
+# getting this wrong silently yields no MCP server at all.
 opencode_dir = os.path.join(home, ".config", "opencode")
 os.makedirs(opencode_dir, exist_ok=True)
 opencode_cfg = os.path.join(opencode_dir, "opencode.json")
 try:
     data = json.load(open(opencode_cfg)) if os.path.exists(opencode_cfg) else {}
-    if "mcpServers" not in data:
-        data["mcpServers"] = {}
-    if "camoufox" not in data["mcpServers"]:
-        data["mcpServers"]["camoufox"] = {"command": "camoufox-mcp"}
-        with open(opencode_cfg, "w") as f:
-            json.dump(data, f, indent=2)
+    if not isinstance(data, dict):
+        data = {}
+    # Drop the key an earlier version of this script wrote; OpenCode never read it.
+    data.pop("mcpServers", None)
+    servers = data.get("mcp")
+    if not isinstance(servers, dict):
+        servers = {}
+        data["mcp"] = servers
+    if "camoufox" not in servers:
+        servers["camoufox"] = {
+            "type": "local",
+            "command": ["camoufox-mcp"],
+            "enabled": True,
+        }
+    with open(opencode_cfg, "w") as f:
+        json.dump(data, f, indent=2)
 except Exception:
     pass
 
