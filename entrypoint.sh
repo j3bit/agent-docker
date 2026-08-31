@@ -147,7 +147,20 @@ done
 
 # Execute passed command (Default: agy with auto-approved permissions in sandbox)
 if [ "$#" -eq 0 ]; then
-    exec agy --dangerously-skip-permissions
-else
-    exec "$@"
+    set -- agy --dangerously-skip-permissions
 fi
+
+# A requested agent that was never built into the image otherwise fails with a bare
+# "exec: claude: not found", which gives no hint that the fix is a config toggle.
+case "$1" in
+    agy|claude|codex|opencode|hermes)
+        if ! command -v "$1" > /dev/null 2>&1; then
+            echo "❌ '$1' is not installed in this image."
+            echo "   Set INSTALL_$(echo "$1" | tr '[:lower:]' '[:upper:]')=true in agent-docker.env,"
+            echo "   then rebuild with: agent-docker --build"
+            exit 127
+        fi
+        ;;
+esac
+
+exec "$@"
